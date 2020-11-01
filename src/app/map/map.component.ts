@@ -1,8 +1,8 @@
-import { AfterViewInit, Component } from '@angular/core';
-import * as L from 'leaflet';
+import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { MatSidenav } from "@angular/material/sidenav";
 
-import { Button } from "./leaflet/button";
-import { ZoomMin } from "./leaflet/zoom.min";
+import { LMap } from "../leaflet/LMap"
+import { LToolbar } from "../leaflet/LToolbar";
 
 @Component({
   selector: 'app-map',
@@ -11,7 +11,12 @@ import { ZoomMin } from "./leaflet/zoom.min";
 })
 export class MapComponent implements AfterViewInit {
 
-  private map;
+  showFiller = false;
+
+  @ViewChild('mapMenu')
+  mapMenu: MatSidenav;
+
+  private map: LMap;
 
   constructor() { }
 
@@ -20,48 +25,44 @@ export class MapComponent implements AfterViewInit {
   }
 
   private initMap(): void {
-    this.map = L.map('map', {
-      crs: L.CRS.Simple,
-      zoomControl: false
-    }).setView([-20, 20], 4);
+    let map: LMap = this.map = new LMap();
 
-    L.tileLayer('assets/map/{z}/map{z}-{y}x{x}.png', {
-      attribution: 'Test Map',
-      continuousWorld: true,
-      maxZoom: 7,
-      minZoom: 4,
-      tileSize: 128,
-      tms: true
-    }).addTo(this.map);
+    let menuBar: LToolbar = new LToolbar({
+      buttons: [
+        { text: '=', title: 'Menu', fn: fn(this.toggleMenu, this) }
+      ],
+      map: map
+    });
 
-    var marker1 = L.marker([0, 0]).addTo(this.map);
-    var marker2 = L.marker([-20, 20]).addTo(this.map);
+    let toolBar: LToolbar = new LToolbar({
+      buttons: [
+        { text: 'D', title: 'Default', fn: fn(this.doDefault, this) },
+        { text: 'C', title: 'Create marker', fn: fn(this.doCreateMarker, this) },
+        { text: 'M', title: 'Move marker', fn: fn(this.doMoveMarker, this) }
+      ],
+      map: map
+    });
+  }
 
-    var circle = L.circle([-10, 10], {
-      color: 'red',
-      fillColor: '#f03',
-      fillOpacity: 0.5,
-      radius: 1
-    }).addTo(this.map);
+  private doDefault() {
+    this.map.activateDefault();
+  }
 
+  private doCreateMarker() {
+    this.map.activateCreateMarker();
+  }
 
-    var myButtonOptions = {
-      'text': 'MyButton',  // string
-      'iconUrl': '/leaflet/images/layers.png',  // string
-      'onClick': my_button_onClick,  // callback function
-      'hideText': true,  // bool
-      'maxWidth': 30,  // number
-      'doToggle': false,  // bool
-      'toggleStatus': false  // bool
-    }
+  private doMoveMarker() {
+    this.map.activateMoveMarker();
+  }
 
-    var myButton = new Button(myButtonOptions).addTo(this.map);
+  private toggleMenu() {
+    this.mapMenu.toggle()
+  }
+}
 
-    function my_button_onClick() {
-      window.alert("someone clicked my button");
-    }
-
-    this.map.addControl(new ZoomMin());
-    this.map.addControl(new ZoomMin());
+function fn(func, context) {
+  return function () {
+    func.call(context);
   }
 }
